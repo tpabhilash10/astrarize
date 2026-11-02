@@ -108,8 +108,13 @@ h3{font-size:1.15rem;letter-spacing:-.02em;line-height:1.3}
 .nav__inner{display:flex;align-items:center;justify-content:space-between;height:72px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.02em;font-size:1.2rem;color:var(--ink)}
 .brand svg{width:34px;height:34px}
-.nav__links{display:flex;gap:32px;font-size:.93rem;color:var(--muted)}
+.nav__links{display:flex;gap:4px;font-size:.93rem;color:var(--muted)}
+.nav__links a{padding:7px 14px;border-radius:999px;transition:background .25s,color .25s}
 .nav__links a:hover{color:var(--berry)}
+/* Scroll-spy: the link for the section on screen gets a highlighted background */
+.nav__links a.is-active{background:var(--berry-soft);color:var(--berry-deep);font-weight:500}
+/* The bar takes the tint of the section underneath it */
+.nav.is-scrolled[data-tone="tint"]{background:rgba(246,239,234,.92);border-bottom-color:var(--line-2)}
 .nav__cta{height:40px;padding:0 18px;font-size:.88rem}
 .nav__toggle{display:none;background:none;border:0;width:40px;height:40px;cursor:pointer}
 .nav__toggle span{display:block;width:20px;height:1.5px;background:var(--ink);margin:5px auto}
@@ -512,7 +517,7 @@ h3{font-size:1.15rem;letter-spacing:-.02em;line-height:1.3}
   section{padding:84px 0}
   .nav__links{position:absolute;top:72px;left:0;right:0;flex-direction:column;gap:0;background:rgba(251,248,246,.98);border-bottom:1px solid var(--line);display:none}
   .nav__links.is-open{display:flex}
-  .nav__links a{padding:16px 24px;border-top:1px solid var(--line)}
+  .nav__links a{padding:16px 24px;border-top:1px solid var(--line);border-radius:0}
   .nav__cta{display:none}
   .nav__toggle{display:block}
   .tile--wa,.tile--stack{grid-column:span 6}
@@ -1072,6 +1077,29 @@ const nav = $('nav'), navLinks = $('navLinks'), navToggle = $('navToggle');
 addEventListener('scroll', () => nav.classList.toggle('is-scrolled', scrollY > 10), {passive:true});
 navToggle.addEventListener('click', () => navToggle.setAttribute('aria-expanded', navLinks.classList.toggle('is-open')));
 navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { navLinks.classList.remove('is-open'); navToggle.setAttribute('aria-expanded', false); }));
+
+/* ---------- Scroll-spy: highlight the menu link for the section on screen ---------- */
+const spyLinks = [...navLinks.querySelectorAll('a')];
+const spySections = ['top','solutions','process','live','contact'].map(id => $(id)).filter(Boolean);
+function setActive(id, tone){
+  spyLinks.forEach(a => {
+    const on = a.getAttribute('href') === '#' + id;
+    a.classList.toggle('is-active', on);
+    on ? a.setAttribute('aria-current','true') : a.removeAttribute('aria-current');
+  });
+  nav.dataset.tone = tone;
+}
+function spy(){
+  const y = innerHeight * 0.4;            // the line 40% down the screen decides
+  let current = spySections[0];
+  for (const sec of spySections){ if (sec.getBoundingClientRect().top <= y) current = sec; }
+  // #top is <main>, so check the hero ends before it counts as "solutions" etc.
+  const id = current.id === 'top' ? '' : current.id;
+  setActive(id, current.classList.contains('tinted') ? 'tint' : 'plain');
+}
+addEventListener('scroll', spy, {passive:true});
+addEventListener('resize', spy);
+spy();
 
 /* ---------- Scroll reveal ---------- */
 const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ e.target.classList.add('is-in'); io.unobserve(e.target); } }), {threshold:.12});
